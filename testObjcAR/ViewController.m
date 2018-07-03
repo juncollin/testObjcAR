@@ -39,6 +39,9 @@
     // Create a session configuration
     ARWorldTrackingConfiguration *configuration = [ARWorldTrackingConfiguration new];
 
+    configuration.planeDetection = ARPlaneDetectionHorizontal;
+    self.sceneView.debugOptions = ARSCNDebugOptionShowFeaturePoints;
+    
     // Run the view's session
     [self.sceneView.session runWithConfiguration:configuration];
 }
@@ -55,9 +58,6 @@
 /*
 // Override to create and configure nodes for anchors added to the view's session.
 - (SCNNode *)renderer:(id<SCNSceneRenderer>)renderer nodeForAnchor:(ARAnchor *)anchor {
-    SCNNode *node = [SCNNode new];
- 
-    // Add geometry to the node...
  
     return node;
 }
@@ -76,6 +76,31 @@
 - (void)sessionInterruptionEnded:(ARSession *)session {
     // Reset tracking and/or remove existing anchors if consistent tracking is required
     
+}
+
+
+- (void) renderer:(id<SCNSceneRenderer>)renderer didAddNode:(SCNNode *)node forAnchor:(ARAnchor *)anchor {
+    
+    if (![anchor isKindOfClass:[ARPlaneAnchor class]]) {
+        return;
+    }
+    // When a new plane is detected we create a new SceneKit plane to visualize it in 3D
+    NSLog(@"plane detected");
+    
+    ARPlaneAnchor *planeAnchor = (ARPlaneAnchor *)anchor;
+//    SCNPlane *plane = [SCNPlane planeWithWidth:planeAnchor.extent.x height:planeAnchor.extent.y];
+    
+    SCNPlane *plane = [SCNPlane planeWithWidth:0.2 height:0.2];
+
+    
+    plane.materials.firstObject.diffuse.contents = UIColor.blueColor;
+    SCNNode *planeNode = [SCNNode nodeWithGeometry:plane];
+    
+    planeNode.position = SCNVector3Make(planeAnchor.center.x, 0, planeAnchor.center.z);
+    [planeNode setTransform:SCNMatrix4MakeRotation(-M_PI / 2, 1, 0, 0)];
+
+    [planeNode setOpacity:0.8];
+    [node addChildNode:planeNode];
 }
 
 @end
